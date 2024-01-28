@@ -67,10 +67,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "hello",
 
     "carsshop.apps.CarsshopConfig",
-    "api.apps.ApiConfig",
 
     'allauth',
     'allauth.account',

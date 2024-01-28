@@ -77,6 +77,9 @@ class Dealership(models.Model):
 class Order(models.Model):
     client = models.ForeignKey(User, on_delete=models.CASCADE, related_name="orders")
     is_paid = models.BooleanField(default=False)
+    order_id = models.CharField(max_length=100, null=True)
+    invoice_url = models.CharField(max_length=100, null=True)
+    status = models.CharField(max_length=100, null=True)
 
     def add_car_type_to_order(self, car_type, quantity):
         available_cars = Car.objects.filter(
@@ -111,8 +114,8 @@ class Order(models.Model):
             car_type = order_quantity.car_type
             quantity = order_quantity.quantity
             cars_to_sell = Car.objects.filter(car_type=car_type, blocked_by_order=self)[
-                :quantity
-            ]
+                           :quantity
+                           ]
             for car in cars_to_sell:
                 car.sell()
 
@@ -126,3 +129,4 @@ class OrderQuantity(models.Model):
     )
     quantity = models.PositiveIntegerField(default=1)
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="car_types")
+
