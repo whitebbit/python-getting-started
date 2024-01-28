@@ -1,13 +1,16 @@
 from django.shortcuts import redirect
-from rest_framework import status
+from rest_framework import status, generics
 from rest_framework.authentication import TokenAuthentication, BasicAuthentication
 from rest_framework.generics import ListAPIView, get_object_or_404
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
+from rest_framework.reverse import reverse
 from rest_framework.views import APIView
+from rest_framework.viewsets import GenericViewSet
 
+from carshop_api.invoices import verify_signature, create_invoice
 from carshop_api.serializers import CarListSerializer, CarTypeSerializer, DealershipSerializer, CarSerializer, \
-    OrderSerializer
+    OrderSerializer, OrderInputSerializer
 from carsshop.models import CarType, Dealership, Order, Car, OrderQuantity
 
 
@@ -15,7 +18,7 @@ from carsshop.models import CarType, Dealership, Order, Car, OrderQuantity
 class CarListView(ListAPIView):
     serializer_class = CarListSerializer
     authentication_classes = [BasicAuthentication, TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get(self, request):
         dealerships = Dealership.objects.all()
@@ -57,7 +60,7 @@ class CreateCarTypeView(ListAPIView):
     serializer_class = CarTypeSerializer
     queryset = CarType.objects.all()
     authentication_classes = [BasicAuthentication, TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     def post(self, request):
         serializer = CarTypeSerializer(data=request.data)
@@ -76,7 +79,7 @@ class CreateDealershipView(ListAPIView):
     serializer_class = DealershipSerializer
     queryset = Dealership.objects.all()
     authentication_classes = [BasicAuthentication, TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     def post(self, request):
         serializer = DealershipSerializer(data=request.data)
@@ -95,7 +98,7 @@ class CreateCarView(ListAPIView):
     serializer_class = CarSerializer
     queryset = Car.objects.all()
     authentication_classes = [BasicAuthentication, TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     def post(self, request):
         serializer = CarSerializer(data=request.data)
@@ -128,3 +131,39 @@ class PaymentView(APIView):
             return Response({"detail": f"Order {order_id} payed success"}, status=status.HTTP_200_OK)
 
         return Response({"detail": "Order is already paid."}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class OrderViewSet(generics.ListAPIView, generics.RetrieveAPIView, generics.DestroyAPIView, GenericViewSet):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def post(self, request):
+        order = Order()
+        order.client = request.user
+        order.save()
+        s = OrderInputSerializer(data=request.data)
+        s.is_valid(raise_exception=True)
+        for order_item in s.validated_data["order"]:
+            order_item["car_type"] = CarType.objects.get(id=order_item["car_type"])
+            q = OrderQuantity.objects.create(car_type=order_item["car_type"], quantity=order_item["quantity"])
+            order.car_types.add(q)
+        order.save()
+        create_invoice(order, reverse("webhook-mono", request=request))
+
+        return Response({"invoice_url": order.invoice_url})
+
+
+class MonoAcquiringWebhookReceiver(APIView):
+    def post(self, request):
+        try:
+            verify_signature(request)
+        except Exception as e:
+            return Response({"status": "error"}, status=400)
+        reference = request.data.get("reference")
+        order = Order.objects.get(id=reference)
+        if order.order_id != request.data.get("invoiceId"):
+            return Response({"status": "error"}, status=400)
+        order.status = request.data.get("status", "error")
+        order.save()
+        return Response({"status": "ok"})

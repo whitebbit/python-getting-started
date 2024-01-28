@@ -74,9 +74,20 @@ class Dealership(models.Model):
         return self.name
 
 
+class OrderQuantity(models.Model):
+    car_type = models.ForeignKey(
+        CarType, on_delete=models.CASCADE, related_name="order_quantities"
+    )
+    quantity = models.PositiveIntegerField(default=1)
+
+
 class Order(models.Model):
+    car_types = models.ManyToManyField(OrderQuantity)
     client = models.ForeignKey(User, on_delete=models.CASCADE, related_name="orders")
     is_paid = models.BooleanField(default=False)
+    order_id = models.CharField(max_length=100, null=True)
+    invoice_url = models.CharField(max_length=100, null=True)
+    status = models.CharField(max_length=100, null=True)
 
     def add_car_type_to_order(self, car_type, quantity):
         available_cars = Car.objects.filter(
@@ -89,11 +100,13 @@ class Order(models.Model):
         else:
             raise Exception("Insufficient cars available for this order")
 
-        OrderQuantity.objects.create(order=self, car_type=car_type, quantity=quantity)
+        oq = OrderQuantity.objects.create(car_type=car_type, quantity=quantity)
+
+        self.car_types.add(oq)
+        self.save()
 
     def cancel_order(self):
-        order_quantities = OrderQuantity.objects.filter(order=self)
-        for order_quantity in order_quantities:
+        for order_quantity in self.car_types.all():
             car_type = order_quantity.car_type
             quantity = order_quantity.quantity
             cars_to_unblock = Car.objects.filter(
@@ -106,23 +119,14 @@ class Order(models.Model):
         self.delete()
 
     def complete_order(self):
-        order_quantities = OrderQuantity.objects.filter(order=self)
-        for order_quantity in order_quantities:
+        for order_quantity in self.car_types.all():
             car_type = order_quantity.car_type
             quantity = order_quantity.quantity
             cars_to_sell = Car.objects.filter(car_type=car_type, blocked_by_order=self)[
-                :quantity
-            ]
+                           :quantity
+                           ]
             for car in cars_to_sell:
                 car.sell()
 
         self.is_paid = True
         self.save()
-
-
-class OrderQuantity(models.Model):
-    car_type = models.ForeignKey(
-        CarType, on_delete=models.CASCADE, related_name="order_quantities"
-    )
-    quantity = models.PositiveIntegerField(default=1)
-    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="car_types")

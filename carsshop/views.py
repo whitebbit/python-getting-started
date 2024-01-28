@@ -91,7 +91,6 @@ def create_client(request):
 def payment(request, order_id):
     request.session.clear()
     order = get_object_or_404(Order, pk=order_id)
-    order_quantities = OrderQuantity.objects.filter(order_id__exact=order_id)
     if request.method == "POST":
         if not order.is_paid:
             order.complete_order()
@@ -101,7 +100,7 @@ def payment(request, order_id):
     return render(
         request,
         "payment.html",
-        {"order": order, "order_quantities": order_quantities},
+        {"order": order, "order_quantities": order.car_types.all()},
     )
 
 
