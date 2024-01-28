@@ -37,26 +37,19 @@ class ClientSerializer(serializers.ModelSerializer):
         model = User
         fields = "__all__"
 
-
-class OrderQuantitySerializer(serializers.ModelSerializer):
-    car_type = CarTypeSerializer()
-
-    class Meta:
-        model = OrderQuantity
-        fields = ('id', 'car_type', 'quantity')
-
-
-class OrderSerializer(serializers.ModelSerializer):
-    client = ClientSerializer()
-    car_types = OrderQuantitySerializer(many=True)
-
-    class Meta:
-        model = Order
-        fields = ('id', 'client', 'is_paid', 'car_types')
-
-
 class CarListSerializer(serializers.Serializer):
     car_type_id = serializers.IntegerField()
     quantity = serializers.IntegerField(min_value=1)
 
+class OrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        fields = ["car_types", "id"]
 
+class OrderQuantitySerializer(serializers.Serializer):
+    car_type = serializers.IntegerField()
+    quantity = serializers.IntegerField()
+
+
+class OrderInputSerializer(serializers.Serializer):
+    order = OrderQuantitySerializer(many=True)

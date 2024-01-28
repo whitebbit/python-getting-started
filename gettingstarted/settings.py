@@ -69,6 +69,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
 
     "carsshop.apps.CarsshopConfig",
+    "carshop_api.apps.CarshopApiConfig",
 
     'allauth',
     'allauth.account',
@@ -261,3 +262,5 @@ CACHES = {
         }
     }
 }
+
+MONOBANK_TOKEN = os.getenv("MONOBANK_TOKEN")
