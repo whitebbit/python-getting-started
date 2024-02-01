@@ -1,10 +1,9 @@
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 
 from .forms import DealershipForm, CarTypeForm, CarForm, ClientForm
-from .models import CarType, Order, Dealership, Car, Client, OrderQuantity
+from .models import CarType, Order, Dealership
 
 
 def car_list(request):
@@ -17,8 +16,7 @@ def car_list(request):
     if request.method == "POST":
         user = request.user
         if not user.is_authenticated:
-            signup_url = reverse('usersessions_list')
-            return redirect(signup_url)
+            return redirect("accounts/signup/")
 
         car_type_id = request.POST.get("car_type_id")
         quantity = int(request.POST.get("quantity"))
