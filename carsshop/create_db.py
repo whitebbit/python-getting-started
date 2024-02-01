@@ -4,7 +4,7 @@ import random
 
 
 class Command(BaseCommand):
-    help = "Заполняет базу данных начальными данными"
+    help = "Заполняет базу данных для использования приложения"
 
     def handle(self, *args, **kwargs):
         dealership, _ = Dealership.objects.get_or_create(
