@@ -11,13 +11,15 @@ def test_order_view_set(user):
     car_type = CarType.objects.create(name="TestCar", brand="TestBrand", price=100)
     client = APIClient()
 
-    payload = {
-        "order": [{"car_type": car_type.id, "quantity": 2}]
-    }
+    payload = {"order": [{"car_type": car_type.id, "quantity": 2}]}
 
     client.force_authenticate(user=user)
 
-    response = client.post(reverse("orders-list"), data=json.dumps(payload), content_type="application/json")
+    response = client.post(
+        reverse("orders-list"),
+        data=json.dumps(payload),
+        content_type="application/json",
+    )
 
     assert response.status_code == status.HTTP_201_CREATED
     assert "invoice_url" in response.data
@@ -32,13 +34,13 @@ def test_order_view_set(user):
 
 @pytest.mark.django_db
 def test_mono_acquiring_webhook_receiver(client, order):
-    payload = {
-        "reference": order.id,
-        "invoiceId": order.order_id,
-        "status": "success"
-    }
+    payload = {"reference": order.id, "invoiceId": order.order_id, "status": "success"}
 
-    response = client.post(reverse("webhook-mono"), data=json.dumps(payload), content_type="application/json")
+    response = client.post(
+        reverse("webhook-mono"),
+        data=json.dumps(payload),
+        content_type="application/json",
+    )
 
     assert response.status_code == status.HTTP_200_OK
     assert "status" in response.data and response.data["status"] == "ok"

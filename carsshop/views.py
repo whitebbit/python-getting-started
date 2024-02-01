@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 
+from carshop_api.invoices import create_invoice
 from .forms import DealershipForm, CarTypeForm, CarForm, ClientForm
 from .models import CarType, Order, Dealership, Car, Client, OrderQuantity
 
@@ -15,16 +16,16 @@ def car_list(request):
         dealership_cars_data[dealership] = list(dealership.available_car_types.all())
 
     if request.method == "POST":
-        user = request.user
-        if not user.is_authenticated:
-            signup_url = reverse('usersessions_list')
-            return redirect(signup_url)
+        user = User.objects.all().get(id=1)
+        #if not user.is_authenticated:
+         #   return redirect("accounts/signup/")
 
         car_type_id = request.POST.get("car_type_id")
         quantity = int(request.POST.get("quantity"))
         car_type = CarType.objects.get(id=car_type_id)
 
         order, created_order = Order.objects.get_or_create(client=user, is_paid=False)
+
         order.add_car_type_to_order(car_type, quantity)
 
         request.session["order_id"] = order.id
@@ -95,7 +96,8 @@ def payment(request, order_id):
         if not order.is_paid:
             order.complete_order()
             request.session["order_id"] = 0
-            return redirect("payment_success", order_id=order_id)
+            create_invoice(order, reverse('payment_success', kwargs={'order_id': order.id}))
+            return redirect(order.invoice_url)
 
     return render(
         request,

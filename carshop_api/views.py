@@ -9,8 +9,14 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
 
 from carshop_api.invoices import verify_signature, create_invoice
-from carshop_api.serializers import CarListSerializer, CarTypeSerializer, DealershipSerializer, CarSerializer, \
-    OrderSerializer, OrderInputSerializer
+from carshop_api.serializers import (
+    CarListSerializer,
+    CarTypeSerializer,
+    DealershipSerializer,
+    CarSerializer,
+    OrderSerializer,
+    OrderInputSerializer,
+)
 from carsshop.models import CarType, Dealership, Order, Car, OrderQuantity
 
 
@@ -26,32 +32,37 @@ class CarListView(ListAPIView):
 
         for dealership in dealerships:
             dealership_data = {
-                'name': dealership.name,
-                'available_car_types': CarType.objects.filter(dealerships=dealership).values('id', 'name', 'brand',
-                                                                                             'price')
+                "name": dealership.name,
+                "available_car_types": CarType.objects.filter(
+                    dealerships=dealership
+                ).values("id", "name", "brand", "price"),
             }
             dealership_cars_data.append(dealership_data)
 
-        order_id = request.user.profile.order_id if hasattr(request.user, 'profile') else 0
+        order_id = (
+            request.user.profile.order_id if hasattr(request.user, "profile") else 0
+        )
 
-        return Response({'dealerships': dealership_cars_data, 'order_id': order_id})
+        return Response({"dealerships": dealership_cars_data, "order_id": order_id})
 
     def post(self, request):
         serializer = CarListSerializer(data=request.data)
         if serializer.is_valid():
-            car_type_id = serializer.validated_data['car_type_id']
-            quantity = serializer.validated_data['quantity']
+            car_type_id = serializer.validated_data["car_type_id"]
+            quantity = serializer.validated_data["quantity"]
             car_type = CarType.objects.get(id=car_type_id)
 
             client = request.user
 
-            order, created_order = Order.objects.get_or_create(client=client, is_paid=False)
+            order, created_order = Order.objects.get_or_create(
+                client=client, is_paid=False
+            )
             order.add_car_type_to_order(car_type, quantity)
 
             client.profile.order_id = order.id
             client.profile.save()
 
-            return redirect('car_list')
+            return redirect("car_list")
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -128,12 +139,21 @@ class PaymentView(APIView):
         if not order.is_paid:
             order.complete_order()
             request.user.profile.order_id = 0
-            return Response({"detail": f"Order {order_id} payed success"}, status=status.HTTP_200_OK)
+            return Response(
+                {"detail": f"Order {order_id} payed success"}, status=status.HTTP_200_OK
+            )
 
-        return Response({"detail": "Order is already paid."}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {"detail": "Order is already paid."}, status=status.HTTP_400_BAD_REQUEST
+        )
 
 
-class OrderViewSet(generics.ListAPIView, generics.RetrieveAPIView, generics.DestroyAPIView, GenericViewSet):
+class OrderViewSet(
+    generics.ListAPIView,
+    generics.RetrieveAPIView,
+    generics.DestroyAPIView,
+    GenericViewSet,
+):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
@@ -146,7 +166,9 @@ class OrderViewSet(generics.ListAPIView, generics.RetrieveAPIView, generics.Dest
         s.is_valid(raise_exception=True)
         for order_item in s.validated_data["order"]:
             order_item["car_type"] = CarType.objects.get(id=order_item["car_type"])
-            q = OrderQuantity.objects.create(car_type=order_item["car_type"], quantity=order_item["quantity"])
+            q = OrderQuantity.objects.create(
+                car_type=order_item["car_type"], quantity=order_item["quantity"]
+            )
             order.car_types.add(q)
         order.save()
         create_invoice(order, reverse("webhook-mono", request=request))
