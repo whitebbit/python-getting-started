@@ -8,39 +8,50 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('carsshop', '0002_remove_order_dealership'),
+        ("carsshop", "0002_remove_order_dealership"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='order',
-            name='invoice_url',
+            model_name="order",
+            name="invoice_url",
             field=models.CharField(max_length=100, null=True),
         ),
         migrations.AddField(
-            model_name='order',
-            name='order_id',
+            model_name="order",
+            name="order_id",
             field=models.CharField(max_length=100, null=True),
         ),
         migrations.AddField(
-            model_name='order',
-            name='status',
+            model_name="order",
+            name="status",
             field=models.CharField(max_length=100, null=True),
         ),
         migrations.AlterField(
-            model_name='car',
-            name='owner',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='cars', to=settings.AUTH_USER_MODEL),
+            model_name="car",
+            name="owner",
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="cars",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AlterField(
-            model_name='dealership',
-            name='clients',
-            field=models.ManyToManyField(related_name='dealerships', to=settings.AUTH_USER_MODEL),
+            model_name="dealership",
+            name="clients",
+            field=models.ManyToManyField(
+                related_name="dealerships", to=settings.AUTH_USER_MODEL
+            ),
         ),
         migrations.AlterField(
-            model_name='order',
-            name='client',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='orders', to=settings.AUTH_USER_MODEL),
+            model_name="order",
+            name="client",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="orders",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
     ]

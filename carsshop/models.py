@@ -90,6 +90,7 @@ class Order(models.Model):
     status = models.CharField(max_length=100, null=True)
 
     def add_car_type_to_order(self, car_type, quantity):
+        print(self.client)
         available_cars = Car.objects.filter(
             car_type=car_type, blocked_by_order__isnull=True, owner__isnull=True
         )
@@ -123,8 +124,8 @@ class Order(models.Model):
             car_type = order_quantity.car_type
             quantity = order_quantity.quantity
             cars_to_sell = Car.objects.filter(car_type=car_type, blocked_by_order=self)[
-                           :quantity
-                           ]
+                :quantity
+            ]
             for car in cars_to_sell:
                 car.sell()
 

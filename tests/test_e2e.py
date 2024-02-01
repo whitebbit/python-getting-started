@@ -28,7 +28,9 @@ class TestOrderViewSet:
 
     def test_create_order(self, api_client, order_data):
         url = reverse("orders-list")
-        response = api_client.post(url, data=json.dumps(order_data), content_type="application/json")
+        response = api_client.post(
+            url, data=json.dumps(order_data), content_type="application/json"
+        )
 
         assert response.status_code == status.HTTP_200_OK
         assert "invoice_url" in response.data
@@ -47,7 +49,9 @@ class TestMonoAcquiringWebhookReceiver:
         def mock_verify_signature(request):
             return True
 
-        monkeypatch.setattr(MonoAcquiringWebhookReceiver, "_verify_signature", mock_verify_signature)
+        monkeypatch.setattr(
+            MonoAcquiringWebhookReceiver, "_verify_signature", mock_verify_signature
+        )
 
     def test_webhook_receiver_success(self, mock_verify_signature, client):
         url = reverse("webhook-mono")
