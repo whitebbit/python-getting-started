@@ -17,8 +17,8 @@ def car_list(request):
 
     if request.method == "POST":
         user = User.objects.all().get(id=1)
-        #if not user.is_authenticated:
-         #   return redirect("accounts/signup/")
+        # if not user.is_authenticated:
+        #   return redirect("accounts/signup/")
 
         car_type_id = request.POST.get("car_type_id")
         quantity = int(request.POST.get("quantity"))
@@ -96,7 +96,9 @@ def payment(request, order_id):
         if not order.is_paid:
             order.complete_order()
             request.session["order_id"] = 0
-            create_invoice(order, reverse('payment_success', kwargs={'order_id': order.id}))
+            create_invoice(
+                order, reverse("payment_success", kwargs={"order_id": order.id})
+            )
             return redirect(order.invoice_url)
 
     return render(
