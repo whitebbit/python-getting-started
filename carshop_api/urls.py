@@ -12,7 +12,6 @@ from carshop_api.views import (
     OrderViewSet,
 )
 
-
 router = routers.DefaultRouter()
 router.register("orders", OrderViewSet, basename="orders")
 

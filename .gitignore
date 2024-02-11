@@ -10,4 +10,7 @@ db.sqlite3
 # macOS files
 .DS_Store
 .idea/
+.idea\
 /.idea
+.idea/misc.xml
+.idea/python-getting-started.iml

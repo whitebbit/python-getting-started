@@ -7,6 +7,6 @@ urlpatterns = [
     path("create-dealership/", views.create_dealership, name="create_dealership"),
     path("create-car/", views.create_car, name="create_car"),
     path("create-client/", views.create_client, name="create_client"),
-    path("payment/<order_id>", views.payment, name="payment"),
+    path("payment/", views.payment, name="payment"),
     path("payment_success/<order_id>", views.payment_success, name="payment_success"),
 ]
