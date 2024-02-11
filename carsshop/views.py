@@ -88,17 +88,22 @@ def create_client(request):
     return render(request, "create_client.html", {"form": form})
 
 
-def payment(request, order_id):
+def payment(request):
+    if request.user.id is None:
+        return render(request, "payment_error.html")
+
     request.session.clear()
-    order = get_object_or_404(Order, pk=order_id)
-    if request.method == "POST":
-        if not order.is_paid:
+    order = Order.objects.filter(client_id=request.user.id, is_paid=False).first()
+    if order is not None:
+        if request.method == "POST":
             order.complete_order()
             request.session["order_id"] = 0
             create_invoice(
                 order, reverse("payment_success", kwargs={"order_id": order.id})
             )
             return redirect(order.invoice_url)
+    else:
+        return render(request, "payment_error.html")
 
     return render(
         request,

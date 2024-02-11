@@ -6,6 +6,7 @@
 <body>
 <h1>Покупка машин</h1>
  <a href="{% url 'payment' %}">Оплатить</a>
+ <a href="{% url 'account_login' %}">Sign In/Sign Up</a>
 {% for dealership, cartypes in dealership_cars_data.items %}
     <h2>{{ dealership.name }}</h2>
     <ul>
